@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Layout,
-  Settings,
-  Smartphone,
-  Globe,
-  ExternalLink,
-  MessageSquare,
-  ShieldCheck,
+import { 
+  Layout, 
+  Settings, 
+  Smartphone, 
+  Globe, 
+  ExternalLink, 
+  MessageSquare, 
+  ShieldCheck, 
   Zap,
   DollarSign,
-  Plus,
+  Plus, 
   X,
   Lock,
   Unlock,
@@ -18,16 +18,10 @@ import {
   Info,
   Trash2,
   Save,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Upload,
+  Camera
 } from 'lucide-react';
-
-// --- IMPORTAÇÃO DAS IMAGENS DO REPAIRCONTROL ---
-import imgHero from './assets/RepairControl-prints/hero.png';
-import imgTelaLogin from './assets/RepairControl-prints/tela-login.png';
-import imgReparos1 from './assets/RepairControl-prints/reparos1.png';
-import imgReparos2 from './assets/RepairControl-prints/reparos2.png';
-import imgRelatorio from './assets/RepairControl-prints/relatorio.png';
-import imgLavaRapido from './assets/RepairControl-prints/lava-rapido.png';
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('todos');
@@ -154,28 +148,21 @@ const App = () => {
   }, []);
 
   const initialProjetos = [
-
-    //teste de prints carregados
     {
       id: 1,
       titulo: "RepairControl",
       categoria: "Gestão",
       descricao: "Sistema robusto para gestão de ordens de serviço e fluxo de oficina. Totalmente integrado com Firebase.",
-      descricaoLonga: "O RepairControl centraliza a operação de centros automotivos. Inclui checkout, controle de estoque e status de serviço em tempo real.",
+      descricaoLonga: "O RepairControl foi desenvolvido para centralizar toda a operação de centros automotivos. Desde o checkout do cliente até o controlo de peças em stock. Utiliza tecnologia de sincronização em tempo real para que múltiplos mecânicos possam atualizar o status do serviço simultaneamente.",
       status: "Estável",
       tags: ["Firebase", "React", "Mobile-First"],
-      // Aqui usamos a variável importada:
-      image: imgTelaLogin,
+      image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=600&q=80",
       prints: [
-        //imgTelaLogin,
-        imgReparos1,
-        imgReparos2,
-        imgRelatorio,
-        imgLavaRapido
+        "https://images.unsplash.com/photo-1551288049-bbda3ef66857?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80"
       ],
-      url: "#contato"
+      url: "https://repaircontrol-378f9.web.app/" 
     },
-
     {
       id: 2,
       titulo: "Vistoria Pro",
@@ -191,7 +178,6 @@ const App = () => {
       ],
       url: "#contato"
     },
-
     {
       id: 3,
       titulo: "Gestão de Estoque",
@@ -211,8 +197,8 @@ const App = () => {
 
   const [projetos, setProjetos] = useState(initialProjetos);
   const [novoProjeto, setNovoProjeto] = useState({
-    titulo: '', categoria: 'Gestão', descricao: '', status: 'Em Desenvolvimento', tags: '', image: '', url: '',
-    descricaoLonga: '', prints: ''
+    titulo: '', categoria: 'Gestão', descricao: '', status: 'Em Desenvolvimento', tags: '', image: '', url: '', 
+    descricaoLonga: '', prints: []
   });
 
   const scrollToSection = (id) => {
@@ -235,7 +221,7 @@ const App = () => {
 
   const handleCardClick = (projeto) => {
     setSelectedProject(projeto);
-    setEditProject({ ...projeto });
+    setEditProject({...projeto});
     setCurrentPrintIndex(0);
   };
 
@@ -252,29 +238,64 @@ const App = () => {
     }
   };
 
+  // Funções para processar arquivos de imagem (Para leigos)
+  const handleImageUpload = (e, target, isMultiple = false) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result;
+        if (target === 'novo') {
+          if (isMultiple) {
+            setNovoProjeto(prev => ({ ...prev, prints: [...prev.prints, base64] }));
+          } else {
+            setNovoProjeto(prev => ({ ...prev, image: base64 }));
+          }
+        } else if (target === 'edit') {
+          if (isMultiple) {
+            setEditProject(prev => ({ ...prev, prints: [...prev.prints, base64] }));
+          } else {
+            setEditProject(prev => ({ ...prev, image: base64 }));
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removePrint = (index, target) => {
+    if (target === 'novo') {
+      setNovoProjeto(prev => ({ ...prev, prints: prev.prints.filter((_, i) => i !== index) }));
+    } else {
+      setEditProject(prev => ({ ...prev, prints: prev.prints.filter((_, i) => i !== index) }));
+      if (currentPrintIndex >= index && currentPrintIndex > 0) setCurrentPrintIndex(prev => prev - 1);
+    }
+  };
+
   const handleAddProject = (e) => {
     e.preventDefault();
     const newId = projetos.length > 0 ? Math.max(...projetos.map(p => p.id)) + 1 : 1;
-    const tagsArray = novoProjeto.tags.split(',').map(tag => tag.trim()).filter(Boolean);
-    const printsArray = novoProjeto.prints.split(',').map(p => p.trim()).filter(Boolean);
+    const tagsArray = typeof novoProjeto.tags === 'string' ? novoProjeto.tags.split(',').map(tag => tag.trim()).filter(Boolean) : novoProjeto.tags;
 
     const projectToAdd = {
       ...novoProjeto,
       id: newId,
       tags: tagsArray.length > 0 ? tagsArray : ['Novo'],
-      prints: printsArray.length > 0 ? printsArray : [novoProjeto.image],
-      image: novoProjeto.image || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80'
+      image: novoProjeto.image || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80',
+      prints: novoProjeto.prints.length > 0 ? novoProjeto.prints : [novoProjeto.image]
     };
 
     setProjetos([projectToAdd, ...projetos]);
     setIsModalOpen(false);
-    setNovoProjeto({ titulo: '', categoria: 'Gestão', descricao: '', status: 'Em Desenvolvimento', tags: '', image: '', url: '', descricaoLonga: '', prints: '' });
+    setNovoProjeto({ titulo: '', categoria: 'Gestão', descricao: '', status: 'Em Desenvolvimento', tags: '', image: '', url: '', descricaoLonga: '', prints: [] });
   };
 
   const handleVisitProject = (url) => {
-    if (url.startsWith('#')) {
+    if (!url || url === '#contato') {
       setSelectedProject(null);
-      setTimeout(() => scrollToSection(url.substring(1)), 300);
+      setTimeout(() => scrollToSection('contato'), 300);
     } else {
       window.open(url, '_blank');
     }
@@ -282,10 +303,10 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-gray-100 font-sans selection:bg-cyan-500 selection:text-white cursor-none relative">
-
+      
       {/* --- CANVAS DO FUNDO (STARFIELD) --- */}
-      <canvas
-        ref={canvasRef}
+      <canvas 
+        ref={canvasRef} 
         className="fixed inset-0 pointer-events-none z-0"
         style={{ opacity: 0.6 }}
       />
@@ -348,6 +369,9 @@ const App = () => {
           0% { top: 0%; }
           100% { top: 100%; }
         }
+        input[type="file"]::file-selector-button {
+          display: none;
+        }
       `}</style>
 
       {/* --- ELEMENTOS DO CURSOR --- */}
@@ -357,12 +381,12 @@ const App = () => {
       {/* --- NAVEGAÇÃO --- */}
       <nav className="sticky top-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div
+          <div 
             ref={logoRef}
             onMouseMove={handleMagneticMove}
             onMouseLeave={resetMagnetic}
             style={{ transform: `translate(${magneticPos.x}px, ${magneticPos.y}px)`, transition: 'transform 0.1s ease-out' }}
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-3 cursor-pointer group" 
             onClick={() => scrollToSection('inicio')}
           >
             <div className="relative flex items-center py-2">
@@ -373,7 +397,7 @@ const App = () => {
               </div>
             </div>
           </div>
-
+          
           <div className="hidden md:flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
             <button onClick={() => scrollToSection('inicio')} className="px-6 py-2.5 rounded-full text-gray-400 hover:bg-white hover:text-black transition-all">Início</button>
             <button onClick={() => scrollToSection('portfolio')} className="px-6 py-2.5 rounded-full text-gray-400 hover:bg-white hover:text-black transition-all">Portfólio</button>
@@ -429,32 +453,32 @@ const App = () => {
             {projetos
               .filter(p => activeTab === 'todos' || p.categoria.toLowerCase() === activeTab)
               .map((projeto) => (
-                <article key={projeto.id} onClick={() => handleCardClick(projeto)} className="flex flex-col h-full group bg-[#111] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-cyan-500/50 transition-all duration-500 cursor-pointer scanline-card relative">
-                  <div className="relative h-64 overflow-hidden shrink-0">
-                    <img src={projeto.image} alt={projeto.titulo} className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
-                    <div className="absolute top-6 left-6 flex gap-2">
-                      <div className="bg-black/60 backdrop-blur-xl border border-white/10 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">{projeto.categoria}</div>
-                      {isAdmin && <div className="bg-red-500/20 backdrop-blur-xl border border-red-500/30 text-red-500 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-1"><Settings size={10} /> Admin</div>}
-                    </div>
-                    <div className="absolute bottom-6 right-6 bg-cyan-500 text-black text-[10px] font-black px-3 py-1.5 rounded-full uppercase shadow-lg">{projeto.status}</div>
+              <article key={projeto.id} onClick={() => handleCardClick(projeto)} className="flex flex-col h-full group bg-[#111] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-cyan-500/50 transition-all duration-500 cursor-pointer scanline-card relative">
+                <div className="relative h-64 overflow-hidden shrink-0">
+                  <img src={projeto.image} alt={projeto.titulo} className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
+                  <div className="absolute top-6 left-6 flex gap-2">
+                     <div className="bg-black/60 backdrop-blur-xl border border-white/10 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">{projeto.categoria}</div>
+                     {isAdmin && <div className="bg-red-500/20 backdrop-blur-xl border border-red-500/30 text-red-500 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-1"><Settings size={10}/> Admin</div>}
                   </div>
-                  <div className="p-10 flex flex-col flex-grow">
-                    <div className="flex gap-3 mb-4">
-                      {projeto.tags.slice(0, 3).map(tag => (<span key={tag} className="text-[11px] text-cyan-500/70 font-mono">#{tag}</span>))}
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-cyan-400 transition-colors">
-                      {projeto.titulo}
-                    </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-8 flex-grow line-clamp-3">{projeto.descricao}</p>
-                    <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                      <span className="text-xs font-bold text-gray-500 group-hover:text-white flex items-center gap-2">
-                        {isAdmin ? 'Editar Projeto' : 'Ver Detalhes'} <div className="h-[1px] w-8 bg-white/10 group-hover:bg-cyan-500/30"></div>
-                      </span>
-                      <Info className="w-4 h-4 text-gray-700 group-hover:text-cyan-500 tech-icon-hover" />
-                    </div>
+                  <div className="absolute bottom-6 right-6 bg-cyan-500 text-black text-[10px] font-black px-3 py-1.5 rounded-full uppercase shadow-lg">{projeto.status}</div>
+                </div>
+                <div className="p-10 flex flex-col flex-grow">
+                  <div className="flex gap-3 mb-4">
+                    {projeto.tags.slice(0, 3).map(tag => (<span key={tag} className="text-[11px] text-cyan-500/70 font-mono">#{tag}</span>))}
                   </div>
-                </article>
-              ))}
+                  <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-cyan-400 transition-colors">
+                    {projeto.titulo}
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-8 flex-grow line-clamp-3">{projeto.descricao}</p>
+                  <div className="pt-6 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-500 group-hover:text-white flex items-center gap-2">
+                      {isAdmin ? 'Editar Projeto' : 'Ver Detalhes'} <div className="h-[1px] w-8 bg-white/10 group-hover:bg-cyan-500/30"></div>
+                    </span>
+                    <Info className="w-4 h-4 text-gray-700 group-hover:text-cyan-500 tech-icon-hover" />
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
         </main>
 
@@ -464,8 +488,8 @@ const App = () => {
             <div className="relative mb-12">
               <div className="absolute -inset-12 bg-cyan-500/10 rounded-full blur-3xl opacity-50"></div>
               <div className="flex flex-col items-center relative z-10 group cursor-default">
-                <span className="font-black text-5xl md:text-6xl tracking-tighter text-white uppercase leading-none group-hover:text-cyan-400 transition-colors duration-500">INFOTECH</span>
-                <span className="text-xs font-bold text-cyan-500 tracking-[0.5em] uppercase leading-none mt-3">Soluções em TI</span>
+                 <span className="font-black text-5xl md:text-6xl tracking-tighter text-white uppercase leading-none group-hover:text-cyan-400 transition-colors duration-500">INFOTECH</span>
+                 <span className="text-xs font-bold text-cyan-500 tracking-[0.5em] uppercase leading-none mt-3">Soluções em TI</span>
               </div>
             </div>
             <h2 className="text-4xl font-bold mb-12 text-white">Transformando o futuro hoje.</h2>
@@ -479,8 +503,8 @@ const App = () => {
             )}
             <div className="pt-12 border-t border-white/5 w-full flex flex-col md:flex-row justify-between items-center gap-6">
               <div className="flex flex-col items-start gap-1">
-                <span className="font-black text-xl tracking-tighter text-white uppercase leading-none">InfoTech</span>
-                <span className="text-[10px] font-bold text-cyan-500 tracking-[0.3em] uppercase leading-none">Soluções em TI</span>
+                 <span className="font-black text-xl tracking-tighter text-white uppercase leading-none">InfoTech</span>
+                 <span className="text-[10px] font-bold text-cyan-500 tracking-[0.3em] uppercase leading-none">Soluções em TI</span>
               </div>
               <p className="text-gray-600 text-[10px] tracking-widest uppercase font-bold">© 2024 InfoTech - Admin Restricted Mode</p>
             </div>
@@ -493,41 +517,39 @@ const App = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
           <div className="absolute inset-0 bg-black/95 backdrop-blur-sm" onClick={() => setSelectedProject(null)}></div>
           <div className="relative w-full max-w-6xl h-full max-h-[90vh] bg-[#0d0d0d] border border-white/10 rounded-[2.5rem] overflow-hidden flex flex-col md:flex-row shadow-2xl animate-in zoom-in-95 duration-300">
-
+            
             {/* Esquerda: Visualizador de Mídia */}
             <div className="relative w-full md:w-1/2 bg-black flex items-center justify-center group/galeria overflow-hidden border-b md:border-b-0 md:border-r border-white/5">
-              {editProject.prints && editProject.prints.length > 0 ? (
-                <>
-                  <img src={editProject.prints[currentPrintIndex]} alt="Preview" className="w-full h-full object-contain p-4" />
-                  {editProject.prints.length > 1 && (
-                    <>
-                      <button onClick={() => setCurrentPrintIndex(prev => (prev - 1 + editProject.prints.length) % editProject.prints.length)} className="absolute left-6 p-3 rounded-full bg-black/50 text-white border border-white/10 opacity-0 group-hover/galeria:opacity-100 transition-opacity hover:bg-cyan-500 hover:text-black tech-icon-hover"><ChevronLeft /></button>
-                      <button onClick={() => setCurrentPrintIndex(prev => (prev + 1) % editProject.prints.length)} className="absolute right-6 p-3 rounded-full bg-black/50 text-white border border-white/10 opacity-0 group-hover/galeria:opacity-100 transition-opacity hover:bg-cyan-500 hover:text-black tech-icon-hover"><ChevronRight /></button>
-                      <div className="absolute bottom-6 flex gap-2">
-                        {editProject.prints.map((_, i) => (
-                          <div key={i} className={`h-1.5 rounded-full transition-all ${i === currentPrintIndex ? 'w-8 bg-cyan-500' : 'w-2 bg-white/20'}`}></div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </>
-              ) : (
-                <div className="flex flex-col items-center text-gray-600">
-                  <ImageIcon size={48} className="mb-4 opacity-20" />
-                  <p className="text-sm font-bold uppercase tracking-widest">Sem imagens extras</p>
-                </div>
-              )}
-
-              {isAdmin && (
-                <div className="absolute top-6 left-6 right-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl border border-white/10 opacity-0 group-hover/galeria:opacity-100 transition-opacity">
-                  <p className="text-[10px] font-bold text-cyan-500 uppercase mb-2">Gerenciar Prints (URLs separadas por vírgula)</p>
-                  <textarea
-                    value={editProject.prints.join(', ')}
-                    onChange={e => setEditProject({ ...editProject, prints: e.target.value.split(',').map(s => s.trim()) })}
-                    className="w-full bg-black/40 text-xs text-gray-300 p-2 rounded border border-white/10 outline-none h-16 focus:border-cyan-500/50"
-                  />
-                </div>
-              )}
+               {editProject.prints && editProject.prints.length > 0 ? (
+                 <>
+                   <img src={editProject.prints[currentPrintIndex]} alt="Preview" className="w-full h-full object-contain p-4" />
+                   {editProject.prints.length > 1 && (
+                     <>
+                        <button onClick={() => setCurrentPrintIndex(prev => (prev - 1 + editProject.prints.length) % editProject.prints.length)} className="absolute left-6 p-3 rounded-full bg-black/50 text-white border border-white/10 opacity-0 group-hover/galeria:opacity-100 transition-opacity hover:bg-cyan-500 hover:text-black tech-icon-hover"><ChevronLeft/></button>
+                        <button onClick={() => setCurrentPrintIndex(prev => (prev + 1) % editProject.prints.length)} className="absolute right-6 p-3 rounded-full bg-black/50 text-white border border-white/10 opacity-0 group-hover/galeria:opacity-100 transition-opacity hover:bg-cyan-500 hover:text-black tech-icon-hover"><ChevronRight/></button>
+                        <div className="absolute bottom-6 flex gap-2">
+                           {editProject.prints.map((_, i) => (
+                             <div key={i} className={`h-1.5 rounded-full transition-all ${i === currentPrintIndex ? 'w-8 bg-cyan-500' : 'w-2 bg-white/20'}`}></div>
+                           ))}
+                        </div>
+                     </>
+                   )}
+                   {isAdmin && (
+                      <button 
+                        onClick={() => removePrint(currentPrintIndex, 'edit')}
+                        className="absolute top-6 right-6 p-3 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
+                        title="Remover esta imagem"
+                      >
+                        <Trash2 size={16}/>
+                      </button>
+                   )}
+                 </>
+               ) : (
+                 <div className="flex flex-col items-center text-gray-600">
+                    <ImageIcon size={48} className="mb-4 opacity-20"/>
+                    <p className="text-sm font-bold uppercase tracking-widest">Sem imagens extras</p>
+                 </div>
+               )}
             </div>
 
             {/* Direita: Conteúdo / Formulário */}
@@ -536,26 +558,41 @@ const App = () => {
                 <div className="flex items-center gap-2">
                   {isAdmin ? (
                     <div className="flex items-center gap-2 bg-red-500/10 text-red-500 px-3 py-1 rounded-full border border-red-500/20 text-[10px] font-black uppercase">
-                      <Settings size={12} /> Modo Editor
+                      <Settings size={12}/> Modo Editor
                     </div>
                   ) : (
                     <span className="text-[10px] font-bold text-cyan-500 uppercase tracking-widest">{editProject.categoria}</span>
                   )}
                 </div>
-                <button onClick={() => setSelectedProject(null)} className="p-2 rounded-full hover:bg-white/5 transition-colors text-gray-500 hover:text-white tech-icon-hover"><X /></button>
+                <button onClick={() => setSelectedProject(null)} className="p-2 rounded-full hover:bg-white/5 transition-colors text-gray-500 hover:text-white tech-icon-hover"><X/></button>
               </div>
 
               {isAdmin ? (
                 <div className="space-y-6">
-                  <div>
-                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Título do Projeto</label>
-                    <input type="text" value={editProject.titulo} onChange={e => setEditProject({ ...editProject, titulo: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-xl font-bold text-white focus:border-cyan-500 outline-none transition-colors" />
+                  {/* Edição de Capa */}
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <label className="text-[10px] font-black text-cyan-500 uppercase tracking-widest block mb-3">Imagem de Capa (Card)</label>
+                    <div className="flex items-center gap-4">
+                      <img src={editProject.image} className="w-20 h-20 rounded-lg object-cover border border-white/10" alt="Capa" />
+                      <label className="flex-1 cursor-pointer group/upload">
+                        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-dashed border-white/20 rounded-xl group-hover/upload:border-cyan-500/50 transition-all">
+                          <Upload size={16} className="text-gray-500 group-hover/upload:text-cyan-500" />
+                          <span className="text-xs font-bold text-gray-400 group-hover/upload:text-white">Trocar Capa</span>
+                        </div>
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'edit', false)} />
+                      </label>
+                    </div>
                   </div>
 
+                  <div>
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Título do Projeto</label>
+                    <input type="text" value={editProject.titulo} onChange={e => setEditProject({...editProject, titulo: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-xl font-bold text-white focus:border-cyan-500 outline-none transition-colors" />
+                  </div>
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Categoria</label>
-                      <select value={editProject.categoria} onChange={e => setEditProject({ ...editProject, categoria: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-500 transition-colors">
+                      <select value={editProject.categoria} onChange={e => setEditProject({...editProject, categoria: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-500 transition-colors">
                         <option>Gestão</option>
                         <option>Comércio</option>
                         <option>Imobiliário</option>
@@ -563,26 +600,39 @@ const App = () => {
                     </div>
                     <div>
                       <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Status</label>
-                      <input type="text" value={editProject.status} onChange={e => setEditProject({ ...editProject, status: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-500 transition-colors" />
+                      <input type="text" value={editProject.status} onChange={e => setEditProject({...editProject, status: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-500 transition-colors" />
+                    </div>
+                  </div>
+
+                  {/* Gerenciar Carrossel (Prints) */}
+                  <div>
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-3">Carrossel de Prints (Fotos Internas)</label>
+                    <div className="grid grid-cols-4 gap-2 mb-4">
+                      {editProject.prints.map((img, i) => (
+                        <div key={i} className="relative aspect-video rounded-lg overflow-hidden border border-white/10 group/img">
+                           <img src={img} className="w-full h-full object-cover" alt={`Print ${i}`} />
+                           <button onClick={() => removePrint(i, 'edit')} className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"><Trash2 size={14}/></button>
+                        </div>
+                      ))}
+                      <label className="aspect-video rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center cursor-pointer hover:border-cyan-500 transition-colors bg-white/5">
+                        <Plus size={16} className="text-cyan-500 mb-1"/>
+                        <span className="text-[8px] font-black uppercase">Add Foto</span>
+                        <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'edit', true)} />
+                      </label>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Tags (Separadas por vírgula)</label>
-                    <input type="text" value={editProject.tags.join(', ')} onChange={e => setEditProject({ ...editProject, tags: e.target.value.split(',').map(s => s.trim()) })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-cyan-500 transition-colors" />
-                  </div>
-
-                  <div>
                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Descrição Detalhada</label>
-                    <textarea rows="6" value={editProject.descricaoLonga || editProject.descricao} onChange={e => setEditProject({ ...editProject, descricaoLonga: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-300 leading-relaxed outline-none resize-none focus:border-cyan-500 transition-colors" />
+                    <textarea rows="4" value={editProject.descricaoLonga || editProject.descricao} onChange={e => setEditProject({...editProject, descricaoLonga: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-300 leading-relaxed outline-none resize-none focus:border-cyan-500 transition-colors" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-6">
                     <button onClick={() => handleDeleteProject(editProject.id)} className="flex items-center justify-center gap-2 py-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-all">
-                      <Trash2 size={18} /> Excluir
+                      <Trash2 size={18}/> Excluir
                     </button>
                     <button onClick={handleUpdateProject} className="flex items-center justify-center gap-2 py-4 bg-cyan-500 text-black rounded-xl font-bold hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/20">
-                      <Save size={18} /> Salvar Alterações
+                      <Save size={18}/> Salvar
                     </button>
                   </div>
                 </div>
@@ -598,11 +648,11 @@ const App = () => {
                     {selectedProject.descricaoLonga || selectedProject.descricao}
                   </p>
                   <div className="mt-auto pt-8 border-t border-white/5">
-                    <button
+                    <button 
                       onClick={() => handleVisitProject(selectedProject.url)}
                       className="w-full py-5 bg-cyan-500 text-black font-black uppercase tracking-widest rounded-2xl hover:bg-cyan-400 transition-all flex items-center justify-center gap-2 shadow-xl shadow-cyan-500/10"
                     >
-                      Solicitar Orçamento <ExternalLink size={18} className="tech-icon-hover" />
+                      Solicitar Orçamento <ExternalLink size={18} className="tech-icon-hover"/>
                     </button>
                   </div>
                 </>
@@ -632,35 +682,80 @@ const App = () => {
       {/* --- MODAL ADICIONAR PROJETO --- */}
       {isModalOpen && isAdmin && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[110] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#111] border border-white/10 rounded-[2.5rem] p-10 w-full max-w-2xl relative my-10 shadow-2xl">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-gray-500 hover:text-white p-2 tech-icon-hover"><X /></button>
+          <div className="bg-[#111] border border-white/10 rounded-[2.5rem] p-10 w-full max-w-4xl relative my-10 shadow-2xl">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-gray-500 hover:text-white p-2 tech-icon-hover"><X/></button>
             <h2 className="text-3xl font-black text-white mb-8 uppercase tracking-tighter">Novo Projeto</h2>
-            <form onSubmit={handleAddProject} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="md:col-span-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Título do Case</label>
-                <input type="text" required value={novoProjeto.titulo} onChange={e => setNovoProjeto({ ...novoProjeto, titulo: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-4 text-white outline-none focus:border-cyan-500 transition-colors" />
+            
+            <form onSubmit={handleAddProject} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Título do Case</label>
+                  <input type="text" required value={novoProjeto.titulo} onChange={e => setNovoProjeto({...novoProjeto, titulo: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl px-4 py-4 text-white outline-none focus:border-cyan-500 transition-colors" />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Categoria</label>
+                    <select value={novoProjeto.categoria} onChange={e => setNovoProjeto({...novoProjeto, categoria: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl px-4 py-4 text-white outline-none focus:border-cyan-500">
+                      <option>Gestão</option>
+                      <option>Comércio</option>
+                      <option>Imobiliário</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Status</label>
+                    <input type="text" required value={novoProjeto.status} onChange={e => setNovoProjeto({...novoProjeto, status: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl px-4 py-4 text-white outline-none focus:border-cyan-500" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Resumo do Card</label>
+                  <textarea required rows="2" value={novoProjeto.descricao} onChange={e => setNovoProjeto({...novoProjeto, descricao: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl px-4 py-4 text-white outline-none resize-none focus:border-cyan-500" />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Descrição Completa</label>
+                  <textarea rows="4" value={novoProjeto.descricaoLonga} onChange={e => setNovoProjeto({...novoProjeto, descricaoLonga: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl px-4 py-4 text-white outline-none resize-none focus:border-cyan-500" />
+                </div>
               </div>
-              <div>
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Categoria</label>
-                <select value={novoProjeto.categoria} onChange={e => setNovoProjeto({ ...novoProjeto, categoria: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-4 text-white outline-none focus:border-cyan-500">
-                  <option>Gestão</option>
-                  <option>Comércio</option>
-                  <option>Imobiliário</option>
-                </select>
+
+              <div className="space-y-6">
+                {/* Upload de Capa */}
+                <div>
+                  <label className="text-[10px] font-black text-cyan-500 uppercase tracking-widest block mb-2">Foto de Capa (Principal)</label>
+                  <label className="block relative aspect-video rounded-2xl overflow-hidden border border-dashed border-white/20 cursor-pointer hover:border-cyan-500 transition-all bg-black group/capa">
+                    {novoProjeto.image ? (
+                      <img src={novoProjeto.image} className="w-full h-full object-cover opacity-60 group-hover/capa:opacity-40 transition-opacity" alt="Capa Preview" />
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                        <Camera size={32} className="mb-2" />
+                        <span className="text-[10px] font-bold uppercase">Escolher Foto do Card</span>
+                      </div>
+                    )}
+                    <input type="file" required={!novoProjeto.image} accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'novo', false)} />
+                  </label>
+                </div>
+
+                {/* Upload de Carrossel */}
+                <div>
+                  <label className="text-[10px] font-black text-cyan-500 uppercase tracking-widest block mb-2">Galeria do Carrossel (Prints)</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {novoProjeto.prints.map((img, i) => (
+                      <div key={i} className="relative aspect-video rounded-lg overflow-hidden border border-white/10 group/item">
+                        <img src={img} className="w-full h-full object-cover" alt="Thumb" />
+                        <button type="button" onClick={() => removePrint(i, 'novo')} className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity"><Trash2 size={16}/></button>
+                      </div>
+                    ))}
+                    <label className="aspect-video rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center cursor-pointer hover:border-cyan-500 bg-white/5 transition-colors">
+                      <Plus size={20} className="text-gray-500" />
+                      <span className="text-[8px] font-black uppercase">Add Print</span>
+                      <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'novo', true)} />
+                    </label>
+                  </div>
+                </div>
+
+                <button type="submit" className="w-full bg-cyan-500 text-black font-black uppercase tracking-widest py-6 rounded-2xl hover:bg-cyan-400 transition-all shadow-xl shadow-cyan-500/20 mt-4">Publicar Projeto</button>
               </div>
-              <div>
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Status Inicial</label>
-                <input type="text" required value={novoProjeto.status} onChange={e => setNovoProjeto({ ...novoProjeto, status: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-4 text-white outline-none focus:border-cyan-500" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Imagem de Capa (URL)</label>
-                <input type="text" required value={novoProjeto.image} onChange={e => setNovoProjeto({ ...novoProjeto, image: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-4 text-white outline-none focus:border-cyan-500" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Resumo</label>
-                <textarea required rows="2" value={novoProjeto.descricao} onChange={e => setNovoProjeto({ ...novoProjeto, descricao: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-4 text-white outline-none resize-none focus:border-cyan-500" />
-              </div>
-              <button type="submit" className="w-full bg-cyan-500 text-black font-black uppercase tracking-widest py-5 rounded-2xl md:col-span-2 hover:bg-cyan-400 transition-all shadow-xl shadow-cyan-500/20">Publicar no Portfólio</button>
             </form>
           </div>
         </div>
